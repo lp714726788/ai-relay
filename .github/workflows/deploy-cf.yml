@@ -70,13 +70,13 @@ jobs:
           echo "$D1_LIST_OUT" | head -20
 
           # Try JSON parsing first
-          DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
+          DATABASE_ID=$(echo "$D1_LIST_OUT" | awk '/^\[/{f=1} f' | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
 
           # Fallback: grep UUID from any format (JSON or plain text)
           if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
             echo "JSON parsing failed, trying regex extraction..."
             # Look for ai-relay followed by UUID pattern
-            DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -A 5 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+            DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -B 2 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
           fi
 
           # If still not found, try creating it
@@ -101,9 +101,9 @@ jobs:
                   echo "$D1_LIST_OUT"
 
                   # Try all possible extraction methods
-                  DATABASE_ID=$(echo "$D1_LIST_OUT" | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
+                  DATABASE_ID=$(echo "$D1_LIST_OUT" | awk '/^\[/{f=1} f' | jq -r '.[] | select(.name == "ai-relay") | .uuid' 2>/dev/null || echo "")
                   if [ -z "$DATABASE_ID" ] || [ "$DATABASE_ID" = "null" ]; then
-                    DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -A 5 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
+                    DATABASE_ID=$(echo "$D1_LIST_OUT" | grep -B 2 -i "ai-relay" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1 || echo "")
                   fi
 
                   if [ -n "$DATABASE_ID" ] && [ "$DATABASE_ID" != "null" ]; then
